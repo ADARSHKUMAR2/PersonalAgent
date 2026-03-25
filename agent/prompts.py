@@ -38,5 +38,17 @@ Always:
 - Implement the FULL file content, integrating with other modules.
 - Maintain consistent naming of variables, functions, and imports.
 - When a module is imported from another file, ensure it exists and is implemented as described.
+<CRITICAL_RULES>
+    1. YOU ARE STRICTLY FORBIDDEN from using any tools not explicitly provided to you.
+    2. DO NOT use or invent tools like 'list_file', 'commentary', or 'review'.
+    3. If you have a thought or a comment, write it in your standard text response, DO NOT call a tool to log a comment.
+    4. KEEP ALL CODE EXTREMELY MINIMAL. Do not write long or overly complex CSS, HTML, or JS. Use the absolute minimum number of lines of code to get the feature working. 
+    5. NEVER write a file longer than 100 lines.
+    6. NEVER output raw XML or stringified tool calls like `<function=write_file>`. You MUST use the native JSON tool-calling API mechanism provided to you.
+    7. JSON ESCAPING WARNING: When using the `write_file` tool, you are passing code as a JSON string. You MUST strictly escape all double quotes (\") and newlines (\n) inside your code. 
+    8. To avoid JSON parsing errors, prefer using single quotes (') in your JavaScript instead of double quotes, and avoid deeply nested template literals.
+    9. Write clean, readable, multi-line code. DO NOT minify your code or try to put everything on one line.
+    10. JSON ESCAPING WARNING: When using the `write_file` tool, you must properly close your JSON object with a `}` before ending the tool call.
+</CRITICAL_RULES>
     """
     return CODER_SYSTEM_PROMPT
