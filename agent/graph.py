@@ -1,16 +1,19 @@
+import os
 import time
 from unittest import result
 from dotenv import load_dotenv, find_dotenv
 from langchain_core.globals  import set_verbose, set_debug
 from langgraph import graph
 from langgraph.prebuilt import create_react_agent
-from tools import write_file, read_file, list_file, get_current_directory
+from tools import read_file, list_file, get_current_directory, run_cmd, init_project_root, write_code_file
+#from langchain_experimental.tools import PythonREPLTool
 
 load_dotenv()
 
 from langchain_core.prompts import prompt
 from langchain_groq import ChatGroq
-llm=ChatGroq(model="openai/gpt-oss-120b")
+#llm=ChatGroq(model="openai/gpt-oss-120b")
+llm = ChatGroq(model="llama-3.3-70b-versatile")
 
 from pydantic import BaseModel , Field
 from prompts import *
@@ -45,7 +48,7 @@ def coder_agent(state: dict) -> dict:
     """LangGraph tool-using coder agent."""
     print("⏳ Waiting 5 seconds for Groq rate limits to cool down...")
     time.sleep(5)
-
+    #python_repl = PythonREPLTool()
     coder_state: CoderState = state.get("coder_state")
     if coder_state is None:
         coder_state = CoderState(task_plan=state["task_plan"], current_step_idx=0)
@@ -59,15 +62,15 @@ def coder_agent(state: dict) -> dict:
 
     system_prompt = coder_system_prompt()
 
-
+    # We removed the target_dir logic because tools.py handles it now!
     user_prompt = (
         f"Task: {current_task.task_description}\n"
         f"File: {current_task.filepath}\n"
         f"Existing content:\n{existing_content}\n"
-        "Use write_file(path, content) to save your changes."
+        "CRITICAL: Use the `write_code_file` tool to save your work. Pass your code to the 'lines' parameter as a JSON array of strings."
     )
 
-    coder_tools = [read_file, write_file, list_file, get_current_directory]
+    coder_tools = [read_file, list_file, get_current_directory, run_cmd, write_code_file]
     react_agent = create_react_agent(llm, coder_tools)
 
     react_agent.invoke({"messages": [{"role": "system", "content": system_prompt},
@@ -91,12 +94,13 @@ graph.set_entry_point("planner")
 
 agent = graph.compile()
 
-user_prompt = "create a simple calculator web application"
-result = agent.invoke({"user_prompt":user_prompt})
+# user_prompt = "create a simple calculator web application"
+# result = agent.invoke({"user_prompt":user_prompt})
 
-print(result)
+#print(result)
 
 if __name__ == "__main__":
-    result = agent.invoke({"user_prompt": "Build a colourful modern todo app in html css and js"},
+    init_project_root()
+    result = agent.invoke({"user_prompt": "create a simple calculator web application"},
                           {"recursion_limit": 100})
     print("Final State:", result)
