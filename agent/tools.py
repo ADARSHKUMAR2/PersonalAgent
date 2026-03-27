@@ -15,21 +15,17 @@ def safe_path_for_project(path: str) -> pathlib.Path:
 
 
 @tool
-def write_code_file(filepath: str, lines: list[str]) -> str:
-    """Saves code to a file on the disk.
+def write_file(path: str, content: str) -> str:
+    """Writes content to a file at the specified path within the project root.
     Args:
-        filepath: The target file name (e.g. 'script.js' or 'index.html')
+        path: The file path (e.g., 'script.js')
         lines: An array of strings, where each string is one line of code.
     """
-    # Use your existing security helper to get the right path!
-    p = safe_path_for_project(filepath)
+    p = safe_path_for_project(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-
-    # Join the array back into a normal file
     with open(p, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
-
-    return f"Successfully wrote {len(lines)} lines to {p}"
+        f.write(content)
+    return f"WROTE:{p}"
 
 
 @tool
@@ -49,7 +45,7 @@ def get_current_directory() -> str:
 
 
 @tool
-def list_file(directory: str = ".") -> str:
+def list_files(directory: str = ".") -> str:
     """Lists all files in the specified directory within the project root."""
     p = safe_path_for_project(directory)
     if not p.is_dir():

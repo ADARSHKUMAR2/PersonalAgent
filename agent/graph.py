@@ -1,54 +1,53 @@
-import os
 import time
-from unittest import result
-from dotenv import load_dotenv, find_dotenv
-from langchain_core.globals  import set_verbose, set_debug
-from langgraph import graph
-from langgraph.prebuilt import create_react_agent
-from tools import read_file, list_file, get_current_directory, run_cmd, init_project_root, write_code_file
-#from langchain_experimental.tools import PythonREPLTool
-
-load_dotenv()
-
-from langchain_core.prompts import prompt
-from langchain_groq import ChatGroq
-#llm=ChatGroq(model="openai/gpt-oss-120b")
-llm = ChatGroq(model="llama-3.3-70b-versatile")
-
-from pydantic import BaseModel , Field
-from prompts import *
-from states import *
-
+from dotenv import load_dotenv
+from langchain_core.globals import set_verbose, set_debug
+from langchain_groq.chat_models import ChatGroq
 from langgraph.constants import END
 from langgraph.graph import StateGraph
+from langchain.agents import create_agent
 
-set_verbose(True)
+from agent.prompts import *
+from agent.states import *
+from agent.tools import write_file, read_file, get_current_directory, list_files
+
+_ = load_dotenv()
+
 set_debug(True)
+set_verbose(True)
+
+llm = ChatGroq(model="openai/gpt-oss-120b")
+
 
 def planner_agent(state: dict) -> dict:
+    """Converts user prompt into a structured Plan."""
     user_prompt = state["user_prompt"]
-    prompt = planner_prompt(user_prompt)
-    resp = llm.with_structured_output(Plan).invoke(prompt)
-
+    resp = llm.with_structured_output(Plan).invoke(
+        planner_prompt(user_prompt)
+    )
     if resp is None:
-        raise ValueError("Planner did not return a valid response")
-
+        raise ValueError("Planner did not return a valid response.")
     return {"plan": resp}
 
+
 def architect_agent(state: dict) -> dict:
+    """Creates TaskPlan from Plan."""
     plan: Plan = state["plan"]
-    resp = llm.with_structured_output(TaskPlan).invoke(architect_prompt(plan))
+    resp = llm.with_structured_output(TaskPlan).invoke(
+        architect_prompt(plan=plan.model_dump_json())
+    )
     if resp is None:
-        raise ValueError("Architect did not return a valid response")
+        raise ValueError("Planner did not return a valid response.")
 
     resp.plan = plan
+    print(resp.model_dump_json())
     return {"task_plan": resp}
+
 
 def coder_agent(state: dict) -> dict:
     """LangGraph tool-using coder agent."""
     print("⏳ Waiting 5 seconds for Groq rate limits to cool down...")
     time.sleep(5)
-    #python_repl = PythonREPLTool()
+
     coder_state: CoderState = state.get("coder_state")
     if coder_state is None:
         coder_state = CoderState(task_plan=state["task_plan"], current_step_idx=0)
@@ -58,20 +57,23 @@ def coder_agent(state: dict) -> dict:
         return {"coder_state": coder_state, "status": "DONE"}
 
     current_task = steps[coder_state.current_step_idx]
-    existing_content = read_file.run(current_task.filepath)
+
+    # Safely invoke the read_file tool
+    existing_content = read_file.invoke({"path": current_task.filepath})
 
     system_prompt = coder_system_prompt()
 
-    # We removed the target_dir logic because tools.py handles it now!
     user_prompt = (
         f"Task: {current_task.task_description}\n"
         f"File: {current_task.filepath}\n"
-        f"Existing content:\n{existing_content}\n"
-        "CRITICAL: Use the `write_code_file` tool to save your work. Pass your code to the 'lines' parameter as a JSON array of strings."
+        f"Existing content:\n{existing_content}\n\n"
+        "Instructions:\n"
+        "Use the `write_file` tool to save your work.\n"
+        "You must pass your code to the 'lines' argument as an array of strings (where each string is one line of code)."
     )
 
-    coder_tools = [read_file, list_file, get_current_directory, run_cmd, write_code_file]
-    react_agent = create_react_agent(llm, coder_tools)
+    coder_tools = [read_file, write_file, list_files, get_current_directory]
+    react_agent = create_agent(llm, coder_tools)
 
     react_agent.invoke({"messages": [{"role": "system", "content": system_prompt},
                                      {"role": "user", "content": user_prompt}]})
@@ -79,10 +81,13 @@ def coder_agent(state: dict) -> dict:
     coder_state.current_step_idx += 1
     return {"coder_state": coder_state}
 
+
 graph = StateGraph(dict)
-graph.add_node("planner",planner_agent)
+
+graph.add_node("planner", planner_agent)
 graph.add_node("architect", architect_agent)
 graph.add_node("coder", coder_agent)
+
 graph.add_edge("planner", "architect")
 graph.add_edge("architect", "coder")
 graph.add_conditional_edges(
@@ -90,17 +95,11 @@ graph.add_conditional_edges(
     lambda s: "END" if s.get("status") == "DONE" else "coder",
     {"END": END, "coder": "coder"}
 )
-graph.set_entry_point("planner")
 
+graph.set_entry_point("planner")
 agent = graph.compile()
 
-# user_prompt = "create a simple calculator web application"
-# result = agent.invoke({"user_prompt":user_prompt})
-
-#print(result)
-
 if __name__ == "__main__":
-    init_project_root()
-    result = agent.invoke({"user_prompt": "create a simple calculator web application"},
+    result = agent.invoke({"user_prompt": "Build a colourful modern todo app in html css and js"},
                           {"recursion_limit": 100})
     print("Final State:", result)
