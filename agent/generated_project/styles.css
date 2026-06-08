@@ -1,0 +1,292 @@
+/* ------------------------------------------------------------
+   ColorfulTodo – Visual Design & Responsive Layout
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------
+   1. Custom colour palette (vibrant theme)
+   ------------------------------------------------------------------ */
+:root {
+  /* Primary UI colours */
+  --primary: #ff6f61;      /* vibrant coral */
+  --secondary: #6b5b95;    /* deep violet */
+  --accent: #88b04b;       /* fresh green */
+
+  /* Background shades */
+  --bg-light: #fdfdfd;     /* almost white */
+  --bg-dark: #2c3e50;      /* dark slate */
+
+  /* Text colours */
+  --text-light: #333333;
+  --text-dark: #eeeeee;
+
+  /* Misc */
+  --font-family: 'Helvetica Neue', Arial, sans-serif;
+  --transition: 0.3s;
+}
+
+/* Dark‑theme overrides – the app will toggle a data‑theme attribute */
+[data-theme='dark'] {
+  --bg-light: var(--bg-dark);
+  --text-light: var(--text-dark);
+}
+
+/* ------------------------------------------------------------------
+   2. Global reset & box‑sizing
+   ------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-light);
+  color: var(--text-light);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ------------------------------------------------------------------
+   3. Layout – .app container
+   ------------------------------------------------------------------ */
+.app {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--bg-light);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ------------------------------------------------------------------
+   4. Header
+   ------------------------------------------------------------------ */
+.app > header {
+  background: var(--primary);
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app > header h1 {
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------
+   5. New‑todo form (input + button)
+   ------------------------------------------------------------------ */
+#new-todo-form {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 1.5rem 0;
+  padding: 0 1rem;
+}
+
+#new-todo-input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color var(--transition);
+}
+
+#new-todo-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+#new-todo-form button {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+#new-todo-form button:hover {
+  background: #73a839; /* slightly darker accent */
+}
+
+/* ------------------------------------------------------------------
+   6. Todo list & items
+   ------------------------------------------------------------------ */
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: var(--bg-light);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.todo-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.todo-item .toggle {
+  margin-right: 0.75rem;
+  width: 1rem;
+  height: 1rem;
+}
+
+.todo-item .todo-label {
+  flex: 1;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.todo-item .edit-input {
+  flex: 1;
+  font-size: 1rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
+
+.todo-item button.delete-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  margin-left: 0.5rem;
+}
+
+.todo-item .drag-handle {
+  cursor: grab;
+  font-size: 1.2rem;
+  color: var(--secondary);
+  margin-left: 0.5rem;
+  user-select: none;
+}
+
+/* State: completed */
+.todo-item.completed .todo-label {
+  text-decoration: line-through;
+  opacity: 0.6;
+  color: #777;
+}
+
+/* State: dragging (applied by JS) */
+.todo-item.dragging {
+  opacity: 0.4;
+}
+
+/* ------------------------------------------------------------------
+   7. Footer – filters & theme selector
+   ------------------------------------------------------------------ */
+footer {
+  margin-top: 1rem;
+  padding: 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filters button {
+  background: var(--secondary);
+  color: #ffffff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.filters button:hover {
+  background: #5a4a7d; /* darker secondary */
+}
+
+.filters button.active {
+  background: var(--accent);
+}
+
+#theme-select {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+}
+
+/* ------------------------------------------------------------------
+   8. Responsive design
+   ------------------------------------------------------------------ */
+@media (max-width: 600px) {
+  #new-todo-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #new-todo-form button {
+    width: 100%;
+  }
+
+  .todo-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .todo-item button.delete-btn,
+  .todo-item .drag-handle {
+    align-self: flex-end;
+    margin-top: 0.4rem;
+  }
+
+  footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters {
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------
+   9. Utility animations (optional) – fade‑in for new items
+   ------------------------------------------------------------------ */
+.todo-item {
+  animation: fadeIn var(--transition) ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
